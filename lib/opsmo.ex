@@ -4,15 +4,12 @@ defmodule Opsmo do
   """
 
   @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> Opsmo.hello()
-      :world
-
+  Dump model into safetensors.
   """
-  def hello do
-    :world
+  def dump(%Axon.ModelState{data: data}, path) do
+    Map.keys(data)
+    |> Enum.each(fn key ->
+      Safetensors.write!(path, data[key])
+    end)
   end
 end
