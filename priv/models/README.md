@@ -1,4 +1,4 @@
-# Hosting on Hugging Face
+# Hosted on Hugging Face
 
 These models are tracked using git lfs on hugging face.
 
