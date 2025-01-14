@@ -2,32 +2,43 @@ defmodule Opsmo.HF do
   @hf_api_url "https://huggingface.co"
   @api_endpoint "https://huggingface.co/api/models"
 
+  @organization "upmaru"
+
   @doc """
   Downloads model files from HuggingFace.
 
   ## Parameters
 
-  - name: The model name on HuggingFace (e.g., "username/model-name")
+  - name: The model name on HuggingFace (e.g., "crpm")
 
   ## Example
 
-      Opsmo.HF.download("opsmo/crpm-v1")
+      Opsmo.HF.download("crpm")
   """
-  def download(name) do
-    [_org, model_name] = String.split(name, "/")
-
+  def download(model_name) do
     path = "tmp/models"
 
     model_path = Path.join(path, model_name)
 
     File.mkdir_p!(model_path)
 
+    full_name = "#{@organization}/opsmo-#{model_name}"
+
     # Get file list from HF API
-    files = list_model_files(name)
+    files = list_model_files(full_name)
 
     # Download all files
-    Enum.each(files, fn file ->
-      download_file(name, file, model_path)
+    Opsmo.TaskSupervisor
+    |> Task.Supervisor.async_stream_nolink(files, __MODULE__, :download_file, [
+      full_name,
+      model_path
+    ])
+    |> Enum.map(fn
+      {:ok, %{body: body}} ->
+        body.path
+
+      {:error, reason} ->
+        raise "Failed to download file: #{inspect(reason)}"
     end)
   end
 
@@ -44,7 +55,7 @@ defmodule Opsmo.HF do
     end)
   end
 
-  defp download_file(model_name, filename, dest_path) do
+  def download_file(filename, model_name, dest_path) do
     url = "#{@hf_api_url}/#{model_name}/resolve/main/#{filename}"
     dest = Path.join(dest_path, filename)
 
