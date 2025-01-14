@@ -99,12 +99,13 @@ defmodule Opsmo.CRPM do
   end
 
   def predict(_model, _state, _input) do
-    raise ArgumentError, "Input must be a list of 6 numbers representing [requested_cpu, requested_memory, requested_disk, available_cpu, available_memory, available_disk]"
+    raise ArgumentError,
+          "Input must be a list of 6 numbers representing [requested_cpu, requested_memory, requested_disk, available_cpu, available_memory, available_disk]"
   end
 
   def build_serving(batch_size \\ 3) do
     Nx.Serving.new(
-      fn _options  ->
+      fn _options ->
         model = model()
         state = load_state()
 
