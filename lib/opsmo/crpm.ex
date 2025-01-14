@@ -32,14 +32,14 @@ defmodule Opsmo.CRPM do
 
   """
 
-  @model_path "#{:code.priv_dir(:opsmo)}" <> "models/opsmo-crpm"
+  @model_name "opsmo-crpm"
 
   @doc """
   Instantiate a new model.
   """
   def model do
     Axon.input("input", shape: {nil, 6})
-    |> Axon.dense(2, name: "compute_placement", activation: :sigmoid)
+    |> Axon.dense(2, name: "compute-placement", activation: :sigmoid)
   end
 
   @doc """
@@ -69,12 +69,60 @@ defmodule Opsmo.CRPM do
     |> Axon.Loop.run(data, state, iterations: iterations, epochs: epochs)
   end
 
-  def predict(model, state, input) do
+  @doc """
+  Predicts the placement score for given input resources.
+
+  ## Parameters
+
+  - model: The Axon model to use for prediction
+  - state: The trained model state containing weights and biases
+  - input: A list of 6 numbers representing [requested_cpu, requested_memory, requested_disk, available_cpu, available_memory, available_disk]
+
+  ## Returns
+
+  A 2-element list containing the prediction scores.
+
+  ## Example
+
+      iex> model = CRPM.model()
+      iex> state = CRPM.load()
+      iex> CRPM.predict(model, state, [0.05, 0.0625, 0.004, 0.825, 0.65, 0.55])
+      [0.8234, 0.1766]
+
+  """
+  def predict(model, state, input) when is_list(input) do
+    # Convert input list to tensor
+    input_tensor = Nx.tensor(input)
+
+    # Run prediction
+    Axon.predict(model, state, input_tensor)
   end
 
-  defdelegate dump(state, path \\ @model_path),
-    to: Opsmo
-
-  def load(path \\ @model_path) do
+  def predict(_model, _state, _input) do
+    raise ArgumentError, "Input must be a list of 6 numbers representing [requested_cpu, requested_memory, requested_disk, available_cpu, available_memory, available_disk]"
   end
+
+  def build_serving(batch_size \\ 3) do
+    Nx.Serving.new(
+      fn _options  ->
+        model = model()
+        state = load_state()
+
+        {_init_fn, predict_fn} = Axon.compile(model, Nx.template({1, 6}, :f32), state)
+
+        fn inputs ->
+          predict_fn.(state, inputs)
+        end
+      end,
+      batch_size: batch_size
+    )
+  end
+
+  defdelegate dump_state(state, name \\ @model_name),
+    to: Opsmo,
+    as: :dump
+
+  defdelegate load_state(name \\ @model_name),
+    to: Opsmo,
+    as: :load
 end
