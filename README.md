@@ -1,6 +1,10 @@
 # Opsmo
 
-**TODO: Add description**
+A set of models for DevOps / Platform Engineering.
+
+## Models
+
+- [Compute Resource Placement Model (CRPM)](https://huggingface.co/upmaru/opsmo-crpm)
 
 ## Installation
 
