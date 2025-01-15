@@ -1,4 +1,6 @@
 defmodule Opsmo do
+  alias Opsmo.HF
+
   @moduledoc """
   Documentation for `Opsmo`.
   """
@@ -6,6 +8,7 @@ defmodule Opsmo do
   @doc """
   Dump model into safetensors.
   """
+
   def dump(%Axon.ModelState{data: data, parameters: parameters}, name) do
     path = Application.get_env(:opsmo, :models_path) <> "/" <> name
     File.mkdir_p!(path)
@@ -38,7 +41,7 @@ defmodule Opsmo do
     # Download if files are missing
     if !has_files do
       IO.puts("Model files not found. Downloading #{name}...")
-      Opsmo.HF.download(name)
+      HF.download!(name)
     end
 
     parameters =

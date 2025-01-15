@@ -1,6 +1,8 @@
 defmodule Mix.Tasks.Opsmo.Embed do
   use Mix.Task
 
+  alias Opsmo.HF
+
   @shortdoc "Downloads model files from HuggingFace"
 
   @moduledoc """
@@ -33,15 +35,11 @@ defmodule Mix.Tasks.Opsmo.Embed do
       |> Enum.map(fn model_name ->
         IO.puts("\nDownloading model: #{model_name}")
 
-        case Opsmo.HF.download(model_name) do
-          items when is_list(items) ->
-            IO.puts("✓ #{model_name} downloaded successfully")
-            {:ok, model_name}
+        items = HF.download!(model_name)
 
-          {:error, reason} ->
-            IO.puts("✗ Failed to download #{model_name}: #{inspect(reason)}")
-            {:error, model_name, reason}
-        end
+        IO.puts("✓ #{model_name} downloaded successfully")
+
+        items
       end)
 
     case Enum.filter(results, &(elem(&1, 0) == :error)) do

@@ -15,7 +15,7 @@ defmodule Opsmo.HF do
 
       Opsmo.HF.download("crpm")
   """
-  def download(model_name) do
+  def download!(model_name) do
     model_name = String.downcase(model_name)
     path = "#{:code.priv_dir(:opsmo)}/models"
 
