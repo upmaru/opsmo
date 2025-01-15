@@ -60,6 +60,7 @@ defmodule Opsmo.CRPM do
   CRPM.train(data)
   """
   def train(data, opts \\ []) do
+    save? = Keyword.get(opts, :save, false)
     model = model()
 
     state = Keyword.get(opts, :state) || Axon.ModelState.empty()
@@ -71,7 +72,9 @@ defmodule Opsmo.CRPM do
       |> Axon.Loop.trainer(:binary_cross_entropy, Polaris.Optimizers.adamw(learning_rate: 0.01))
       |> Axon.Loop.run(data, state, iterations: iterations, epochs: epochs)
 
-    dump_state(state)
+    if save? do
+      dump_state(state)
+    end
 
     state
   end

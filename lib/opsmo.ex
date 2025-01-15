@@ -27,7 +27,7 @@ defmodule Opsmo do
   def load(name) do
     mode = Application.get_env(:opsmo, :mode, :inference)
 
-    path = models_path(mode) <> "/" <> String.downcase(name)
+    path = models_path(mode) <> String.downcase(name)
 
     # Check if model files exist
     has_files =
@@ -42,11 +42,13 @@ defmodule Opsmo do
       end
 
     # Download if files are missing
-    if !has_files && mode == :inference do
-      IO.puts("Model files not found. Downloading #{name}...")
-      HF.download!(name)
-    else
-      raise "Model files not found in #{models_path(:training)}"
+    cond do
+      !has_files && mode == :inference ->
+        IO.puts("Model files not found. Downloading #{name}...")
+        HF.download!(name)
+
+      has_files ->
+        :ok
     end
 
     parameters =
@@ -77,6 +79,6 @@ defmodule Opsmo do
   end
 
   defp models_path(:inference) do
-    "#{:code.priv_dir(:opsmo)}/models"
+    "#{:code.priv_dir(:opsmo)}/models/"
   end
 end
