@@ -41,12 +41,10 @@ defmodule Opsmo.MixProject do
   defp accelerators({:unix, :linux}) do
     case gnu_or_musl() do
       :musl ->
-        []
+        [{:candlex, "~> 0.1.10"}]
 
       :gnu ->
-        [
-          {:exla, "~> 0.9"}
-        ]
+        [{:exla, "~> 0.9"}]
     end
   end
 
