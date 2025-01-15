@@ -51,7 +51,7 @@ defmodule Opsmo.MixProject do
   end
 
   defp gnu_or_musl do
-    {output, _} = System.get_env("ldd", ["--version"], stderr_to_stdout: true)
+    {output, _} = System.cmd("ldd", ["--version"], stderr_to_stdout: true)
 
     cond do
       String.contains?(output, "musl") ->
