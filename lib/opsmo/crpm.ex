@@ -66,9 +66,14 @@ defmodule Opsmo.CRPM do
     iterations = Keyword.get(opts, :iterations, 100)
     epochs = Keyword.get(opts, :epochs, 100)
 
-    model
-    |> Axon.Loop.trainer(:binary_cross_entropy, Polaris.Optimizers.adamw(learning_rate: 0.01))
-    |> Axon.Loop.run(data, state, iterations: iterations, epochs: epochs)
+    state =
+      model
+      |> Axon.Loop.trainer(:binary_cross_entropy, Polaris.Optimizers.adamw(learning_rate: 0.01))
+      |> Axon.Loop.run(data, state, iterations: iterations, epochs: epochs)
+
+    dump_state(state)
+
+    state
   end
 
   @doc """
