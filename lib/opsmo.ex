@@ -21,7 +21,7 @@ defmodule Opsmo do
   end
 
   def load(name) do
-    path = Application.get_env(:opsmo, :models_path) <> "/" <> name
+    path = "#{:code.priv_dir(:opsmo)}/models" <> "/" <> name
 
     parameters =
       File.read!(path <> "/parameters.json")
