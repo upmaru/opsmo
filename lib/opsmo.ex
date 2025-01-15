@@ -21,7 +21,25 @@ defmodule Opsmo do
   end
 
   def load(name) do
-    path = "#{:code.priv_dir(:opsmo)}/models" <> "/" <> name
+    path = "#{:code.priv_dir(:opsmo)}/models" <> "/" <> String.downcase(name)
+
+    # Check if model files exist
+    has_files =
+      case File.ls(path) do
+        {:ok, files} ->
+          has_params = Enum.member?(files, "parameters.json")
+          has_tensors = Enum.any?(files, &String.ends_with?(&1, ".safetensors"))
+          has_params && has_tensors
+
+        {:error, _} ->
+          false
+      end
+
+    # Download if files are missing
+    if !has_files do
+      IO.puts("Model files not found. Downloading #{name}...")
+      Opsmo.HF.download(name)
+    end
 
     parameters =
       File.read!(path <> "/parameters.json")
