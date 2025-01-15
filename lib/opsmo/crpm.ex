@@ -57,9 +57,11 @@ defmodule Opsmo.CRPM do
     {x, y}
   end)
 
-  CRPM.train(model, data)
+  CRPM.train(data)
   """
-  def train(model, data, opts \\ []) do
+  def train(data, opts \\ []) do
+    model = model()
+
     state = Keyword.get(opts, :state) || Axon.ModelState.empty()
     iterations = Keyword.get(opts, :iterations, 100)
     epochs = Keyword.get(opts, :epochs, 100)
@@ -103,11 +105,11 @@ defmodule Opsmo.CRPM do
           "Input must be a list of 6 numbers representing [requested_cpu, requested_memory, requested_disk, available_cpu, available_memory, available_disk]"
   end
 
-  def build_serving(batch_size \\ 3) do
+  def build_serving(trained_state \\ nil, batch_size \\ 3) do
     Nx.Serving.new(
       fn _options ->
         model = model()
-        state = load_state()
+        state = trained_state || load_state()
 
         {_init_fn, predict_fn} = Axon.compile(model, Nx.template({1, 6}, :f32), state)
 

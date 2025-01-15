@@ -10,7 +10,8 @@ defmodule Opsmo do
   """
 
   def dump(%Axon.ModelState{data: data, parameters: parameters}, name) do
-    path = Application.get_env(:opsmo, :models_path) <> "/" <> name
+    path = Application.get_env(:opsmo, :models_store) <> "/" <> name
+
     File.mkdir_p!(path)
 
     File.write!(path <> "/parameters.json", Jason.encode_to_iodata!(parameters))
@@ -24,7 +25,9 @@ defmodule Opsmo do
   end
 
   def load(name) do
-    path = "#{:code.priv_dir(:opsmo)}/models" <> "/" <> String.downcase(name)
+    mode = Application.get_env(:opsmo, :mode, :inference)
+
+    path = models_path(mode) <> "/" <> String.downcase(name)
 
     # Check if model files exist
     has_files =
@@ -39,9 +42,11 @@ defmodule Opsmo do
       end
 
     # Download if files are missing
-    if !has_files do
+    if !has_files && mode == :inference do
       IO.puts("Model files not found. Downloading #{name}...")
       HF.download!(name)
+    else
+      raise "Model files not found in #{models_path(:training)}"
     end
 
     parameters =
@@ -65,5 +70,13 @@ defmodule Opsmo do
     state = Axon.ModelState.empty()
 
     %{state | data: tensors, parameters: parameters}
+  end
+
+  defp models_path(:training) do
+    Application.get_env(:opsmo, :models_store)
+  end
+
+  defp models_path(:inference) do
+    "#{:code.priv_dir(:opsmo)}/models"
   end
 end
