@@ -1,3 +1,6 @@
 [submodule "models/opsmo-crpm"]
 	path = models/opsmo-crpm
 	url = git@hf.co:upmaru/opsmo-crpm
+[submodule "models/opsmp-crpm"]
+	path = models/opsmp-crpm
+	url = git@hf.co:upmaru/opsmo-crpm
