@@ -32,7 +32,7 @@ defmodule Opsmo.CRPM do
 
   """
 
-  @model_name "opsmo-crpm"
+  @model_name "crpm"
 
   @doc """
   Instantiate a new model.

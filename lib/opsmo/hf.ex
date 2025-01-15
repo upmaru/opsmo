@@ -13,7 +13,7 @@ defmodule Opsmo.HF do
 
   ## Example
 
-      Opsmo.HF.download("crpm")
+      Opsmo.HF.download!("crpm")
   """
   def download!(model_name) do
     model_name = String.downcase(model_name)
