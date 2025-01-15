@@ -17,7 +17,7 @@ defmodule Opsmo.HF do
   """
   def download(model_name) do
     model_name = String.downcase(model_name)
-    path = "tmp/models"
+    path = "#{:code.priv_dir(:opsmo)}/models"
 
     model_path = Path.join(path, model_name)
 

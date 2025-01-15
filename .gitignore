@@ -23,3 +23,5 @@ opsmo-*.tar
 /tmp/
 
 .DS_Store
+
+/priv/models/

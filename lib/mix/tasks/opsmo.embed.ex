@@ -26,8 +26,6 @@ defmodule Mix.Tasks.Opsmo.Embed do
   end
 
   def run(model_names) do
-    IO.inspect(model_names)
-
     Mix.Task.run("app.start")
 
     results =
