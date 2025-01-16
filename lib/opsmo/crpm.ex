@@ -153,7 +153,7 @@ defmodule Opsmo.CRPM do
 
         template = %{
           "cpu" => Nx.template({1, 2}, :f32),
-          "memory" => Nx.tempate({1, 2}, :f32),
+          "memory" => Nx.template({1, 2}, :f32),
           "disk" => Nx.template({1, 2}, :f32)
         }
 
