@@ -5,10 +5,33 @@ defmodule Opsmo do
   Documentation for `Opsmo`.
   """
 
+  @valid_models [Opsmo.CRPM]
+
+  def start_link(model) when model in @valid_models do
+    serving = model.build_serving()
+
+    Nx.Serving.start_link(name: model, serving: serving)
+  end
+
+  def spec(model, opts \\ []) when model in @valid_models do
+    serving = model.build_serving()
+
+    options =
+      [name: model, serving: serving]
+      |> Keyword.merge(opts)
+
+    {Nx.Serving, options}
+  end
+
+  def predict(model, inputs) do
+    batch = Nx.Batch.concatenate([inputs])
+
+    Nx.Serving.batched_run(model, batch)
+  end
+
   @doc """
   Dump model into safetensors.
   """
-
   def dump(%Axon.ModelState{data: data, parameters: parameters}, name) do
     path = Application.get_env(:opsmo, :models_store) <> "/" <> name
 
