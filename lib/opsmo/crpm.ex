@@ -38,8 +38,27 @@ defmodule Opsmo.CRPM do
   Instantiate a new model.
   """
   def model do
-    Axon.input("input", shape: {nil, 6})
-    |> Axon.dense(2, name: "compute-placement", activation: :sigmoid)
+    # Create three input tensors for CPU, Memory, and Disk
+    input_cpu = Axon.input("input_cpu", shape: {nil, 3})
+    input_memory = Axon.input("input_memory", shape: {nil, 3})
+    input_disk = Axon.input("input_disk", shape: {nil, 3})
+
+    # Create separate prediction paths for each resource
+    cpu_prediction = input_cpu
+      |> Axon.dense(2, activation: :sigmoid, name: "cpu_output")
+
+    memory_prediction = input_memory
+      |> Axon.dense(2, activation: :sigmoid, name: "memory_output")
+
+    disk_prediction = input_disk
+      |> Axon.dense(2, activation: :sigmoid, name: "disk_output")
+
+    # Combine outputs into a single model with multiple outputs
+    Axon.container(%{
+      cpu: cpu_prediction,
+      memory: memory_prediction,
+      disk: disk_prediction
+    })
   end
 
   @doc """
@@ -67,9 +86,16 @@ defmodule Opsmo.CRPM do
     iterations = Keyword.get(opts, :iterations, 100)
     epochs = Keyword.get(opts, :epochs, 100)
 
+    # Create loss function for each output
+    losses = %{
+      cpu: :binary_cross_entropy,
+      memory: :binary_cross_entropy,
+      disk: :binary_cross_entropy
+    }
+
     state =
       model
-      |> Axon.Loop.trainer(:binary_cross_entropy, Polaris.Optimizers.adamw(learning_rate: 0.01))
+      |> Axon.Loop.trainer(losses, Polaris.Optimizers.adamw(learning_rate: 0.01))
       |> Axon.Loop.run(data, state, iterations: iterations, epochs: epochs)
 
     if save? do
@@ -100,17 +126,20 @@ defmodule Opsmo.CRPM do
       [0.8234, 0.1766]
 
   """
-  def predict(model, state, input) when is_list(input) do
-    # Convert input list to tensor
-    input_tensor = Nx.tensor(input)
+  def predict(model, state, inputs) do
+    # Expect inputs in the format:
+    # %{
+    #   "input_cpu" => [requested, available, sum],
+    #   "input_memory" => [requested, available, sum],
+    #   "input_disk" => [requested, available, sum]
+    # }
+    input_map = %{
+      "input_cpu" => Nx.tensor([inputs["cpu"]]),
+      "input_memory" => Nx.tensor([inputs["memory"]]),
+      "input_disk" => Nx.tensor([inputs["disk"]])
+    }
 
-    # Run prediction
-    Axon.predict(model, state, input_tensor)
-  end
-
-  def predict(_model, _state, _input) do
-    raise ArgumentError,
-          "Input must be a list of 6 numbers representing [requested_cpu, requested_memory, requested_disk, available_cpu, available_memory, available_disk]"
+    Axon.predict(model, state, input_map)
   end
 
   def build_serving(trained_state \\ nil, batch_size \\ 3) do
