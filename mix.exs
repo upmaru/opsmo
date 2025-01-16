@@ -41,7 +41,7 @@ defmodule Opsmo.MixProject do
   defp accelerators({:unix, :linux}) do
     case gnu_or_musl() do
       :musl ->
-        [{:candlex, github: "zacksiri/candlex"}]
+        []
 
       :gnu ->
         [{:exla, "~> 0.9"}]
