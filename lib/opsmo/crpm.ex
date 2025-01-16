@@ -39,26 +39,29 @@ defmodule Opsmo.CRPM do
   """
   def model do
     # Create three input tensors for CPU, Memory, and Disk
-    input_cpu = Axon.input("input_cpu", shape: {nil, 3})
-    input_memory = Axon.input("input_memory", shape: {nil, 3})
-    input_disk = Axon.input("input_disk", shape: {nil, 3})
+    input_cpu = Axon.input("cpu", shape: {nil, 2})
+    input_memory = Axon.input("memory", shape: {nil, 2})
+    input_disk = Axon.input("disk", shape: {nil, 2})
 
     # Create separate prediction paths for each resource
-    cpu_prediction = input_cpu
-      |> Axon.dense(2, activation: :sigmoid, name: "cpu_output")
+    cpu_prediction =
+      Axon.dense(input_cpu, 2, activation: :sigmoid, name: "cpu")
 
-    memory_prediction = input_memory
-      |> Axon.dense(2, activation: :sigmoid, name: "memory_output")
+    memory_prediction =
+      Axon.dense(input_memory, 2, activation: :sigmoid, name: "memory")
 
-    disk_prediction = input_disk
-      |> Axon.dense(2, activation: :sigmoid, name: "disk_output")
+    disk_prediction =
+      Axon.dense(input_disk, 2, activation: :sigmoid, name: "disk")
 
     # Combine outputs into a single model with multiple outputs
-    Axon.container(%{
-      cpu: cpu_prediction,
-      memory: memory_prediction,
-      disk: disk_prediction
-    })
+    Axon.container(
+      %{
+        cpu: cpu_prediction,
+        memory: memory_prediction,
+        disk: disk_prediction
+      },
+      name: "results"
+    )
   end
 
   @doc """
@@ -129,14 +132,14 @@ defmodule Opsmo.CRPM do
   def predict(model, state, inputs) do
     # Expect inputs in the format:
     # %{
-    #   "input_cpu" => [requested, available, sum],
-    #   "input_memory" => [requested, available, sum],
-    #   "input_disk" => [requested, available, sum]
+    #   "cpu" => [requested, available, sum],
+    #   "memory" => [requested, available, sum],
+    #   "disk" => [requested, available, sum]
     # }
     input_map = %{
-      "input_cpu" => Nx.tensor([inputs["cpu"]]),
-      "input_memory" => Nx.tensor([inputs["memory"]]),
-      "input_disk" => Nx.tensor([inputs["disk"]])
+      "cpu" => Nx.tensor([inputs["cpu"]]),
+      "memory" => Nx.tensor([inputs["memory"]]),
+      "disk" => Nx.tensor([inputs["disk"]])
     }
 
     Axon.predict(model, state, input_map)
@@ -148,7 +151,13 @@ defmodule Opsmo.CRPM do
         model = model()
         state = trained_state || load_state()
 
-        {_init_fn, predict_fn} = Axon.compile(model, Nx.template({1, 6}, :f32), state)
+        template = %{
+          "cpu" => Nx.template({1, 2}, :f32),
+          "memory" => Nx.tempate({1, 2}, :f32),
+          "disk" => Nx.template({1, 2}, :f32)
+        }
+
+        {_init_fn, predict_fn} = Axon.compile(model, template, state)
 
         fn inputs ->
           predict_fn.(state, inputs)
