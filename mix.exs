@@ -34,14 +34,14 @@ defmodule Opsmo.MixProject do
 
   defp accelerators({:unix, :darwin}) do
     [
-      {:emlx, github: "elixir-nx/emlx"}
+      {:emlx, github: "elixir-nx/emlx"},
     ]
   end
 
   defp accelerators({:unix, :linux}) do
     case gnu_or_musl() do
       :musl ->
-        [{:candlex, "~> 0.1.10"}]
+        [{:candlex, github: "zacksiri/candlex"}]
 
       :gnu ->
         [{:exla, "~> 0.9"}]

@@ -22,7 +22,7 @@ defmodule Opsmo.CRPM.Dataset do
   """
   def memory do
     total_memory =
-      Nx.tensor([2048, 4096, 8192, 16384, 32768, 65536])
+      Nx.tensor([2048, 4096, 8192, 16384, 32768, 65536], type: :u32)
 
     requested_memory =
       Nx.tensor([
@@ -32,7 +32,7 @@ defmodule Opsmo.CRPM.Dataset do
         [1024],
         [2048],
         [4096]
-      ])
+      ], type: :u32)
 
     used_memory_range =
       Nx.linspace(0.1, 1.0, n: 12)
