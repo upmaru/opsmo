@@ -34,7 +34,7 @@ defmodule Opsmo.MixProject do
 
   defp accelerators({:unix, :darwin}) do
     [
-      {:emlx, github: "elixir-nx/emlx"},
+      {:emlx, github: "elixir-nx/emlx"}
     ]
   end
 
