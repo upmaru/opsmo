@@ -124,7 +124,7 @@ defmodule Opsmo.CRPM.Dataset do
     {x, y}
   end
 
-  def memory_to_csv({x, y}) do
+  def memory_to_parquet({x, y}) do
     requested = Nx.take(x, Nx.tensor([0]), axis: 1)
     available = Nx.take(x, Nx.tensor([1]), axis: 1)
     total_normalized = Nx.take(x, Nx.tensor([2]), axis: 1)
@@ -136,6 +136,7 @@ defmodule Opsmo.CRPM.Dataset do
       total_normalized: Explorer.Series.from_tensor(total_normalized),
       expected: Explorer.Series.from_tensor(expected)
     })
+    |> Explorer.DataFrame.to_parquet("datasets/memory.parquet")
   end
 
   # TODO: Implement CPU and Disk synthetic data generation we should also combine the
