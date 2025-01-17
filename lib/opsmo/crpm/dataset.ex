@@ -83,7 +83,7 @@ defmodule Opsmo.CRPM.Dataset do
         axis: 1
       )
 
-    # reorder the columns to match [requested, available, total_normalized]
+    # reorder the columns to match [requested, used, total_normalized]
     x = Nx.take(x, Nx.tensor([0, 2, 1]), axis: 1)
 
     key = Nx.Random.key(121345)
@@ -122,6 +122,20 @@ defmodule Opsmo.CRPM.Dataset do
       |> Nx.equal(Nx.tensor([0, 1]))
 
     {x, y}
+  end
+
+  def memory_to_csv({x, y}) do
+    requested = Nx.take(x, Nx.tensor([0]), axis: 1)
+    available = Nx.take(x, Nx.tensor([1]), axis: 1)
+    total_normalized = Nx.take(x, Nx.tensor([2]), axis: 1)
+    expected = Nx.take(y, Nx.tensor([1]), axis: 1)
+
+    Explorer.DataFrame.new(%{
+      requested: Explorer.Series.from_tensor(requested),
+      used: Explorer.Series.from_tensor(available),
+      total_normalized: Explorer.Series.from_tensor(total_normalized),
+      expected: Explorer.Series.from_tensor(expected)
+    })
   end
 
   # TODO: Implement CPU and Disk synthetic data generation we should also combine the
