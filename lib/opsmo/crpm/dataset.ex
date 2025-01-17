@@ -3,6 +3,23 @@ defmodule Opsmo.CRPM.Dataset do
   Dataset for training the CRPM model.
   """
 
+  # 1GB in MB
+  @min_memory 1024
+  # 128GB in MB
+  @max_memory 131_072
+
+  def normalize_memory(memory) when is_number(memory) do
+    memory
+    |> Nx.tensor()
+    |> normalize_memory()
+  end
+
+  def normalize_memory(%Nx.Tensor{} = memory) do
+    memory
+    |> Nx.subtract(@min_memory)
+    |> Nx.divide(@max_memory - @min_memory)
+  end
+
   @doc """
   Returns a stream of training data.
 
@@ -34,6 +51,14 @@ defmodule Opsmo.CRPM.Dataset do
         [4096]
       ])
 
+    normalized_total_memory =
+      total_memory
+      |> normalize_memory()
+      |> Nx.reshape({6, 1})
+
+    # Repeat normalized_total_memory to match x_requested shape
+    normalized_total_repeated = Nx.tile(normalized_total_memory, [6, 1])
+
     used_memory_range =
       Nx.linspace(0.1, 1.0, n: 12)
       |> Nx.reshape({12, 1})
@@ -42,6 +67,8 @@ defmodule Opsmo.CRPM.Dataset do
       requested_memory
       |> Nx.divide(total_memory)
       |> Nx.reshape({36, 1})
+
+    x_requested = Nx.concatenate([x_requested, normalized_total_repeated], axis: 1)
 
     x_requested_repeated = Nx.tile(x_requested, [12, 1])
     used_memory_repeated = Nx.tile(used_memory_range, [36, 1])
@@ -56,14 +83,30 @@ defmodule Opsmo.CRPM.Dataset do
         axis: 1
       )
 
+    # reorder the columns to match [requested, available, total_normalized]
+    x = Nx.take(x, Nx.tensor([0, 2, 1]), axis: 1)
+
+    key = Nx.Random.key(121345)
+
+    {x, _} = Nx.Random.shuffle(key, x)
+
     # Calculate sum
     sum =
       Nx.add(
         # First column
-        Nx.slice_along_axis(x, 1, 1, axis: 1),
+        Nx.take(x, Nx.tensor([0]), axis: 1),
         # Second column
-        Nx.slice_along_axis(x, 0, 1, axis: 1)
+        Nx.take(x, Nx.tensor([1]), axis: 1)
       )
+
+    # This threshold is more lenient to allow for more memory usage in higher memory systems
+    # Since 0.8 of 2GB is not the same as 0.8 of 128GB
+    threshold =
+      Nx.take(x, Nx.tensor([2]), axis: 1)
+      # Adjust this multiplier to control the effect
+      |> Nx.multiply(0.30)
+      # Base threshold of 0.8
+      |> Nx.add(0.8)
 
     # Create expected output based on the sum
     # This is a simple way to generate synthetic data as a starting point
@@ -72,7 +115,7 @@ defmodule Opsmo.CRPM.Dataset do
     y =
       sum
       # Check if > 0.8
-      |> Nx.greater(0.8)
+      |> Nx.greater(threshold)
       # Flip values (>0.8 becomes 0, <=0.8 becomes 1)
       |> Nx.logical_not()
       |> Nx.as_type(:u8)
