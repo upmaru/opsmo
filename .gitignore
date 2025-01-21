@@ -25,3 +25,5 @@ opsmo-*.tar
 .DS_Store
 
 /priv/models/
+
+.envrc
