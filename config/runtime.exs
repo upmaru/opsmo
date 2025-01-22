@@ -6,5 +6,6 @@ if :os.type() == {:unix, :darwin} do
 end
 
 if :os.type() == {:unix, :linux} do
-  config :nx, :default_backend, {EXLA.Backend, client: :cuda}
+  config :nx,
+    :default_backend, {EXLA.Backend, client: :cuda}
 end
