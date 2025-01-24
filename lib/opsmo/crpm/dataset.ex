@@ -3,48 +3,51 @@ defmodule Opsmo.CRPM.Dataset do
   Dataset for training the CRPM model.
   """
 
-  @doc """
-  Returns a stream of training data.
+  alias __MODULE__.Memory
+  alias __MODULE__.Base
 
-  ## Cases
+  def train do
+    memory = Memory.train()
+    disk = Base.train()
+    cpu = Base.train()
 
-  The training data represents all the cases we want the model to take into account.
-
-  - When the requested ram almost match the available ram (consumes most of the available ram), the model should predict [1, 0]
-  - When the requested resources is in the standard range and the resource is not fully consumed, the model should predict [0, 1]
-  - When the requested resources is greater than the available resources, the model should predict [1, 0]
-  - When the available resource is < 20% available, the model should predict [1, 0]
-
-  More cases will result in a better model. We can also add more features to the model in the future, for example if the requested resource includes a GPU and the GPU is available return [0, 1].
-  We can also bake GPU utilization into the dataset.
-  """
-  def for_training do
-    x =
-      [
-        [0.005, 0.640, 0.005, 0.30, 0.650, 0.782],
-        [0.005, 0.0625, 0.005, 0.30, 0.650, 0.782],
-        [0.005, 0.0074, 0.002, 1.0, 0.420, 0.822],
-        [1, 0.5, 0.85, 1.0, 0.420, 0.822],
-        [0.005, 0.016, 0.005, 0.30, 0.18, 0.182],
-        [0.005, 0.0074, 0.002, 1.0, 0.20, 0.20]
-      ]
-      |> Nx.tensor(type: :f16)
-
-    y =
-      Nx.tensor(
-        [
-          [1, 0],
-          [0, 1],
-          [0, 1],
-          [1, 0],
-          [1, 0],
-          [1, 0]
-        ],
-        type: :u8
-      )
+    inputs = %{
+      "cpu" => cpu.data,
+      "memory" => memory.data,
+      "disk" => disk.data
+    }
 
     Stream.repeatedly(fn ->
-      {x, y}
+      {inputs, {cpu.target, memory.target, disk.target}}
     end)
+  end
+
+  def test(samples \\ 3) do
+    memory = Memory.train()
+    disk = Base.train()
+    cpu = Base.train()
+
+    memory_sample = Nx.slice_along_axis(memory.data, 0, samples, axis: 0)
+    memory_target = Nx.slice_along_axis(memory.target, 0, samples, axis: 0)
+
+    disk_sample = Nx.slice_along_axis(disk.data, 0, samples, axis: 0)
+    disk_target = Nx.slice_along_axis(disk.target, 0, samples, axis: 0)
+
+    cpu_sample = Nx.slice_along_axis(cpu.data, 0, samples, axis: 0)
+    cpu_target = Nx.slice_along_axis(cpu.target, 0, samples, axis: 0)
+
+    inputs = %{
+      "cpu" => Nx.to_list(cpu_sample),
+      "memory" => Nx.to_list(memory_sample),
+      "disk" => Nx.to_list(disk_sample)
+    }
+
+    targets = %{
+      cpu: cpu_target,
+      memory: memory_target,
+      disk: disk_target
+    }
+
+    {inputs, targets}
   end
 end

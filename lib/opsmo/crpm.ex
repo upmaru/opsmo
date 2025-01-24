@@ -38,8 +38,28 @@ defmodule Opsmo.CRPM do
   Instantiate a new model.
   """
   def model do
-    Axon.input("input", shape: {nil, 6})
-    |> Axon.dense(2, name: "compute-placement", activation: :sigmoid)
+    # Create three input tensors for CPU, Memory, and Disk
+    input_cpu = Axon.input("cpu", shape: {nil, 2})
+    input_memory = Axon.input("memory", shape: {nil, 3})
+    input_disk = Axon.input("disk", shape: {nil, 2})
+
+    # Create separate prediction paths for each resource
+    cpu_prediction =
+      Axon.dense(input_cpu, 2, activation: :sigmoid, name: "cpu")
+
+    memory_prediction =
+      input_memory
+      |> Axon.dense(8, activation: :relu)
+      |> Axon.dense(2, activation: :sigmoid, name: "memory")
+
+    disk_prediction =
+      Axon.dense(input_disk, 2, activation: :sigmoid, name: "disk")
+
+    # Combine outputs into a single model with multiple outputs
+    Axon.container(
+      {cpu_prediction, memory_prediction, disk_prediction},
+      name: "results"
+    )
   end
 
   @doc """
@@ -51,15 +71,12 @@ defmodule Opsmo.CRPM do
 
   alias Opsmo.CRPM
 
-  model = CRPM.model()
-
-  data = Stream.repeatedly(fn ->
-    {x, y}
-  end)
+  data = CRPM.Dataset.train()
 
   CRPM.train(data)
   """
   def train(data, opts \\ []) do
+    compiler = Application.get_env(:opsmo, :compiler)
     save? = Keyword.get(opts, :save, false)
     model = model()
 
@@ -67,10 +84,13 @@ defmodule Opsmo.CRPM do
     iterations = Keyword.get(opts, :iterations, 100)
     epochs = Keyword.get(opts, :epochs, 100)
 
+    # Losses and weights for each output cpu, memory, disk
+    losses = [binary_cross_entropy: 0.2, binary_cross_entropy: 0.4, binary_cross_entropy: 0.4]
+
     state =
       model
-      |> Axon.Loop.trainer(:binary_cross_entropy, Polaris.Optimizers.adamw(learning_rate: 0.01))
-      |> Axon.Loop.run(data, state, iterations: iterations, epochs: epochs)
+      |> Axon.Loop.trainer(losses, Polaris.Optimizers.adamw(learning_rate: 0.01))
+      |> Axon.Loop.run(data, state, iterations: iterations, epochs: epochs, compiler: compiler)
 
     if save? do
       dump_state(state)
@@ -100,17 +120,18 @@ defmodule Opsmo.CRPM do
       [0.8234, 0.1766]
 
   """
-  def predict(model, state, input) when is_list(input) do
-    # Convert input list to tensor
-    input_tensor = Nx.tensor(input)
+  def predict(state, inputs) do
+    model = model()
 
-    # Run prediction
-    Axon.predict(model, state, input_tensor)
-  end
+    input_map = %{
+      "cpu" => Nx.tensor([inputs["cpu"]]),
+      "memory" => Nx.tensor([inputs["memory"]]),
+      "disk" => Nx.tensor([inputs["disk"]])
+    }
 
-  def predict(_model, _state, _input) do
-    raise ArgumentError,
-          "Input must be a list of 6 numbers representing [requested_cpu, requested_memory, requested_disk, available_cpu, available_memory, available_disk]"
+    model
+    |> Axon.predict(state, input_map)
+    |> result()
   end
 
   def build_serving(trained_state \\ nil, batch_size \\ 3) do
@@ -119,7 +140,13 @@ defmodule Opsmo.CRPM do
         model = model()
         state = trained_state || load_state()
 
-        {_init_fn, predict_fn} = Axon.compile(model, Nx.template({1, 6}, :f32), state)
+        template = %{
+          "cpu" => Nx.template({1, 2}, :f32),
+          "memory" => Nx.template({1, 2}, :f32),
+          "disk" => Nx.template({1, 2}, :f32)
+        }
+
+        {_init_fn, predict_fn} = Axon.compile(model, template, state)
 
         fn inputs ->
           predict_fn.(state, inputs)
@@ -127,6 +154,14 @@ defmodule Opsmo.CRPM do
       end,
       batch_size: batch_size
     )
+  end
+
+  defp result({cpu, memory, disk}) do
+    cpu = Nx.squeeze(cpu, axes: [0])
+    memory = Nx.squeeze(memory, axes: [0])
+    disk = Nx.squeeze(disk, axes: [0])
+
+    %{cpu: cpu, memory: memory, disk: disk}
   end
 
   defdelegate dump_state(state, name \\ @model_name),
