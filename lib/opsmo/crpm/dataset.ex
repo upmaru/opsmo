@@ -22,23 +22,32 @@ defmodule Opsmo.CRPM.Dataset do
     end)
   end
 
-  @spec memory_to_parquet({any(), any()}) ::
-          :ok
-          | {:error, %{:__exception__ => true, :__struct__ => atom(), optional(atom()) => any()}}
-  def memory_to_parquet({x, y}) do
-    requested = Nx.take(x, Nx.tensor([0]), axis: 1)
-    available = Nx.take(x, Nx.tensor([1]), axis: 1)
-    total_normalized = Nx.take(x, Nx.tensor([2]), axis: 1)
-    expected = Nx.take(y, Nx.tensor([1]), axis: 1)
+  def test(samples \\ 3) do
+    memory = Memory.train()
+    disk = Base.train()
+    cpu = Base.train()
 
-    Explorer.DataFrame.new(%{
-      requested: Explorer.Series.from_tensor(requested),
-      used: Explorer.Series.from_tensor(available),
-      total_normalized: Explorer.Series.from_tensor(total_normalized),
-      expected: Explorer.Series.from_tensor(expected)
-    })
-    |> Explorer.DataFrame.to_parquet("datasets/memory.parquet")
+    memory_sample = Nx.slice_along_axis(memory.data, 0, samples, axis: 0)
+    memory_target = Nx.slice_along_axis(memory.target, 0, samples, axis: 0)
+
+    disk_sample = Nx.slice_along_axis(disk.data, 0, samples, axis: 0)
+    disk_target = Nx.slice_along_axis(disk.target, 0, samples, axis: 0)
+
+    cpu_sample = Nx.slice_along_axis(cpu.data, 0, samples, axis: 0)
+    cpu_target = Nx.slice_along_axis(cpu.target, 0, samples, axis: 0)
+
+    inputs = %{
+      "cpu" => Nx.to_list(cpu_sample),
+      "memory" => Nx.to_list(memory_sample),
+      "disk" => Nx.to_list(disk_sample)
+    }
+
+    targets = %{
+      cpu: cpu_target,
+      memory: memory_target,
+      disk: disk_target
+    }
+
+    {inputs, targets}
   end
-
-  # TODO: Implement CPU and Disk synthetic data generation we should also combine the
 end

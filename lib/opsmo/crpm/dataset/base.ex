@@ -7,6 +7,12 @@ defmodule Opsmo.CRPM.Dataset.Base do
     generate(examples: examples, granularity: granularity, factor: factor)
   end
 
+  def test(examples \\ 50, granularity \\ 50) do
+    factor = div(examples, granularity)
+
+    generate(examples: examples, granularity: granularity, factor: factor)
+  end
+
   defn generate(opts \\ []) do
     opts = keyword!(opts, examples: 500, granularity: 100, factor: 5)
     requested_resource_key = Nx.Random.key(121_345)

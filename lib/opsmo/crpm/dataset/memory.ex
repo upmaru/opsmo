@@ -123,4 +123,8 @@ defmodule Opsmo.CRPM.Dataset.Memory do
   def train do
     generate([2048, 4096, 8192, 16384, 32768, 65536], [128, 256, 512, 1024, 2048, 4096])
   end
+
+  def test do
+    generate([1024, 6144, 12288, 24576, 49152], [64, 230, 461, 922, 1844])
+  end
 end

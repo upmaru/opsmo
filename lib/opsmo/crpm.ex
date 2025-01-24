@@ -71,15 +71,12 @@ defmodule Opsmo.CRPM do
 
   alias Opsmo.CRPM
 
-  model = CRPM.model()
-
-  data = Stream.repeatedly(fn ->
-    {x, y}
-  end)
+  data = CRPM.Dataset.train()
 
   CRPM.train(data)
   """
   def train(data, opts \\ []) do
+    compiler = Application.get_env(:opsmo, :compiler)
     save? = Keyword.get(opts, :save, false)
     model = model()
 
@@ -93,7 +90,7 @@ defmodule Opsmo.CRPM do
     state =
       model
       |> Axon.Loop.trainer(losses, Polaris.Optimizers.adamw(learning_rate: 0.01))
-      |> Axon.Loop.run(data, state, iterations: iterations, epochs: epochs)
+      |> Axon.Loop.run(data, state, iterations: iterations, epochs: epochs, compiler: compiler)
 
     if save? do
       dump_state(state)
@@ -123,14 +120,18 @@ defmodule Opsmo.CRPM do
       [0.8234, 0.1766]
 
   """
-  def predict(model, state, inputs) do
+  def predict(state, inputs) do
+    model = model()
+
     input_map = %{
       "cpu" => Nx.tensor([inputs["cpu"]]),
       "memory" => Nx.tensor([inputs["memory"]]),
       "disk" => Nx.tensor([inputs["disk"]])
     }
 
-    Axon.predict(model, state, input_map)
+    model
+    |> Axon.predict(state, input_map)
+    |> result()
   end
 
   def build_serving(trained_state \\ nil, batch_size \\ 3) do
@@ -153,6 +154,14 @@ defmodule Opsmo.CRPM do
       end,
       batch_size: batch_size
     )
+  end
+
+  defp result({cpu, memory, disk}) do
+    cpu = Nx.squeeze(cpu, axes: [0])
+    memory = Nx.squeeze(memory, axes: [0])
+    disk = Nx.squeeze(disk, axes: [0])
+
+    %{cpu: cpu, memory: memory, disk: disk}
   end
 
   defdelegate dump_state(state, name \\ @model_name),
