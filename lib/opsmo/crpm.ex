@@ -40,7 +40,7 @@ defmodule Opsmo.CRPM do
   def model do
     # Create three input tensors for CPU, Memory, and Disk
     input_cpu = Axon.input("cpu", shape: {nil, 2})
-    input_memory = Axon.input("memory", shape: {nil, 2})
+    input_memory = Axon.input("memory", shape: {nil, 3})
     input_disk = Axon.input("disk", shape: {nil, 2})
 
     # Create separate prediction paths for each resource
@@ -48,18 +48,16 @@ defmodule Opsmo.CRPM do
       Axon.dense(input_cpu, 2, activation: :sigmoid, name: "cpu")
 
     memory_prediction =
-      Axon.dense(input_memory, 2, activation: :sigmoid, name: "memory")
+      input_memory
+      |> Axon.dense(8, activation: :relu)
+      |> Axon.dense(2, activation: :sigmoid, name: "memory")
 
     disk_prediction =
       Axon.dense(input_disk, 2, activation: :sigmoid, name: "disk")
 
     # Combine outputs into a single model with multiple outputs
     Axon.container(
-      %{
-        cpu: cpu_prediction,
-        memory: memory_prediction,
-        disk: disk_prediction
-      },
+      {cpu_prediction, memory_prediction, disk_prediction},
       name: "results"
     )
   end
@@ -89,12 +87,8 @@ defmodule Opsmo.CRPM do
     iterations = Keyword.get(opts, :iterations, 100)
     epochs = Keyword.get(opts, :epochs, 100)
 
-    # Create loss function for each output
-    losses = %{
-      cpu: :binary_cross_entropy,
-      memory: :binary_cross_entropy,
-      disk: :binary_cross_entropy
-    }
+    # Losses and weights for each output cpu, memory, disk
+    losses = [binary_cross_entropy: 0.2, binary_cross_entropy: 0.4, binary_cross_entropy: 0.4]
 
     state =
       model
@@ -130,12 +124,6 @@ defmodule Opsmo.CRPM do
 
   """
   def predict(model, state, inputs) do
-    # Expect inputs in the format:
-    # %{
-    #   "cpu" => [requested, available, sum],
-    #   "memory" => [requested, available, sum],
-    #   "disk" => [requested, available, sum]
-    # }
     input_map = %{
       "cpu" => Nx.tensor([inputs["cpu"]]),
       "memory" => Nx.tensor([inputs["memory"]]),

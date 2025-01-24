@@ -4,9 +4,27 @@ defmodule Opsmo.CRPM.Dataset do
   """
 
   alias __MODULE__.Memory
+  alias __MODULE__.Base
 
-  defdelegate memory_train, to: Memory, as: :train
+  def train do
+    memory = Memory.train()
+    disk = Base.train()
+    cpu = Base.train()
 
+    inputs = %{
+      "cpu" => cpu.data,
+      "memory" => memory.data,
+      "disk" => disk.data
+    }
+
+    Stream.repeatedly(fn ->
+      {inputs, {cpu.target, memory.target, disk.target}}
+    end)
+  end
+
+  @spec memory_to_parquet({any(), any()}) ::
+          :ok
+          | {:error, %{:__exception__ => true, :__struct__ => atom(), optional(atom()) => any()}}
   def memory_to_parquet({x, y}) do
     requested = Nx.take(x, Nx.tensor([0]), axis: 1)
     available = Nx.take(x, Nx.tensor([1]), axis: 1)

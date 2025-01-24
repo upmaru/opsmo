@@ -82,7 +82,7 @@ defmodule Opsmo.CRPM.Dataset.Memory do
     # reorder the columns to match [requested, used, total_normalized]
     x = Nx.take(x, Nx.tensor([0, 2, 1]), axis: 1)
 
-    key = Nx.Random.key(121345)
+    key = Nx.Random.key(121_345)
 
     {x, _} = Nx.Random.shuffle(key, x)
 
@@ -117,7 +117,7 @@ defmodule Opsmo.CRPM.Dataset.Memory do
       |> Nx.as_type(:u8)
       |> Nx.equal(Nx.tensor([0, 1]))
 
-    {x, y}
+    %{data: x, target: y}
   end
 
   def train do
