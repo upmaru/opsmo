@@ -152,7 +152,8 @@ defmodule Opsmo.CRPM do
           predict_fn.(state, inputs)
         end
       end,
-      batch_size: batch_size
+      batch_size: batch_size,
+      client_postprocessing: &result/1
     )
   end
 

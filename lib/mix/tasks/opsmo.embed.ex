@@ -10,48 +10,36 @@ defmodule Mix.Tasks.Opsmo.Embed do
 
   ## Usage
 
-      $ mix opsmo.embed MODEL_NAME [MODEL_NAME...]
+      $ mix opsmo.embed MODEL_NAME [MODEL_NAME...] [--branch BRANCH_NAME]
 
   Examples:
       $ mix opsmo.embed crpm
+      $ mix opsmo.embed crpm --branch dev
       $ mix opsmo.embed crpm llm classifier
   """
 
   @impl Mix.Task
-  def run([]) do
-    Mix.raise("""
-    No model names provided.
+  def run(args) do
+    {opts, model_names} = OptionParser.parse!(args, strict: [branch: :string])
 
-    Usage:
-        mix opsmo.embed MODEL_NAME [MODEL_NAME...]
-    """)
-  end
+    if model_names == [] do
+      Mix.raise("""
+      No model names provided.
 
-  def run(model_names) do
+      Usage:
+          mix opsmo.embed MODEL_NAME [MODEL_NAME...] [--branch BRANCH_NAME]
+      """)
+    end
+
     Mix.Task.run("app.start")
 
-    results =
-      model_names
-      |> Enum.map(fn model_name ->
-        IO.puts("\nDownloading model: #{model_name}")
+    model_names
+    |> Enum.each(fn model_name ->
+      IO.puts("\nDownloading model: #{model_name}")
 
-        items = HF.download!(model_name)
+      HF.download!(model_name, branch: opts[:branch])
 
-        IO.puts("✓ #{model_name} downloaded successfully")
-
-        items
-      end)
-
-    case Enum.filter(results, &(elem(&1, 0) == :error)) do
-      [] ->
-        :ok
-
-      failures ->
-        failures
-        |> Enum.map_join("\n", fn {:error, name, reason} ->
-          "  #{name}: #{inspect(reason)}"
-        end)
-        |> then(&Mix.raise("Some models failed to download:\n#{&1}"))
-    end
+      IO.puts("✓ #{model_name} downloaded successfully")
+    end)
   end
 end
