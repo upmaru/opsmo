@@ -35,6 +35,7 @@ defmodule Opsmo.CRPM.Dataset.Memory do
   """
   def generate(total_memory_list, requested_memory_list, opts \\ []) do
     seed = Keyword.get(opts, :seed, 121_345)
+
     total_memory =
       Nx.tensor(total_memory_list)
 
@@ -124,7 +125,9 @@ defmodule Opsmo.CRPM.Dataset.Memory do
   def train(opts \\ []) do
     seed = Keyword.get(opts, :seed, 121_345)
 
-    generate([2048, 4096, 8192, 16384, 32768, 65536], [128, 256, 512, 1024, 2048, 4096], seed: seed)
+    generate([2048, 4096, 8192, 16384, 32768, 65536], [128, 256, 512, 1024, 2048, 4096],
+      seed: seed
+    )
   end
 
   def test(opts \\ []) do

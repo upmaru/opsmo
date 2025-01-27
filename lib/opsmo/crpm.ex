@@ -168,16 +168,19 @@ defmodule Opsmo.CRPM do
     }
   end
 
-  defp result({{cpu, memory, disk}, _}, _) do
-    result({cpu, memory, disk})
-  end
+  defp result({outputs, _}, _), do: result(outputs)
 
   defp result({cpu, memory, disk}) do
-    cpu = Nx.squeeze(cpu, axes: [0])
-    memory = Nx.squeeze(memory, axes: [0])
-    disk = Nx.squeeze(disk, axes: [0])
+    # Convert tensors to lists and take second value (probability of true) from each pair
+    cpu_values = cpu |> Nx.to_list() |> Enum.map(&List.last/1)
+    memory_values = memory |> Nx.to_list() |> Enum.map(&List.last/1)
+    disk_values = disk |> Nx.to_list() |> Enum.map(&List.last/1)
 
-    %{cpu: cpu, memory: memory, disk: disk}
+    # Zip the values together by index
+    [cpu_values, memory_values, disk_values]
+    |> Enum.zip_with(fn [cpu, memory, disk] ->
+      %{cpu: cpu, memory: memory, disk: disk}
+    end)
   end
 
   defdelegate dump_state(state, name \\ @model_name),

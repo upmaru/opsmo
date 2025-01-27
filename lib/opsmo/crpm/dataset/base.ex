@@ -10,7 +10,13 @@ defmodule Opsmo.CRPM.Dataset.Base do
     requested_seed = seed
     used_seed = seed * 2
 
-    generate(examples: examples, granularity: granularity, factor: factor, requested_seed: requested_seed, used_seed: used_seed)
+    generate(
+      examples: examples,
+      granularity: granularity,
+      factor: factor,
+      requested_seed: requested_seed,
+      used_seed: used_seed
+    )
   end
 
   def test(opts \\ []) do
@@ -23,11 +29,25 @@ defmodule Opsmo.CRPM.Dataset.Base do
 
     factor = div(examples, granularity)
 
-    generate(examples: examples, granularity: granularity, factor: factor, requested_seed: requested_seed, used_seed: used_seed)
+    generate(
+      examples: examples,
+      granularity: granularity,
+      factor: factor,
+      requested_seed: requested_seed,
+      used_seed: used_seed
+    )
   end
 
   defn generate(opts \\ []) do
-    opts = keyword!(opts, examples: 500, granularity: 100, factor: 5, requested_seed: 121_345, used_seed: 267_434)
+    opts =
+      keyword!(opts,
+        examples: 500,
+        granularity: 100,
+        factor: 5,
+        requested_seed: 121_345,
+        used_seed: 267_434
+      )
+
     requested_resource_key = Nx.Random.key(opts[:requested_seed])
 
     requested_requested =
