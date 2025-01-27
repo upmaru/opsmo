@@ -121,11 +121,15 @@ defmodule Opsmo.CRPM.Dataset.Memory do
     %{data: x, target: y}
   end
 
-  def train(seed \\ 121_345) do
+  def train(opts \\ []) do
+    seed = Keyword.get(opts, :seed, 121_345)
+
     generate([2048, 4096, 8192, 16384, 32768, 65536], [128, 256, 512, 1024, 2048, 4096], seed: seed)
   end
 
-  def test(seed \\ 267_434) do
+  def test(opts \\ []) do
+    seed = Keyword.get(opts, :seed, 267_434)
+
     generate([1024, 6144, 12288, 24576, 49152], [64, 230, 461, 922, 1844], seed: seed)
   end
 end

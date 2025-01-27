@@ -23,9 +23,9 @@ defmodule Opsmo.CRPM.Dataset do
   end
 
   def test(samples \\ 3, seed \\ 132_276) do
-    memory = Memory.test(seed * 2)
-    disk = Base.test(seed * 3)
-    cpu = Base.test(seed * 4)
+    memory = Memory.test(seed: seed * 2)
+    disk = Base.test(seed: seed * 3)
+    cpu = Base.test(seed: seed * 4)
 
     memory_sample = Nx.slice_along_axis(memory.data, 0, samples, axis: 0)
     memory_target = Nx.slice_along_axis(memory.target, 0, samples, axis: 0)

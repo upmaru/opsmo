@@ -24,6 +24,8 @@ defmodule Opsmo do
   end
 
   def predict(model, inputs) do
+    inputs = model.process_inputs(inputs)
+
     batch = Nx.Batch.concatenate([inputs])
 
     Nx.Serving.batched_run(model, batch)
@@ -83,7 +85,6 @@ defmodule Opsmo do
       |> Enum.filter(fn p ->
         String.ends_with?(p, ".safetensors")
       end)
-
 
     tensors =
       Enum.map(layers, fn layer ->

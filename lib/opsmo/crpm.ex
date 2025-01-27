@@ -123,11 +123,7 @@ defmodule Opsmo.CRPM do
   def predict(state, inputs) do
     model = model()
 
-    input_map = %{
-      "cpu" => Nx.tensor([inputs["cpu"]]),
-      "memory" => Nx.tensor([inputs["memory"]]),
-      "disk" => Nx.tensor([inputs["disk"]])
-    }
+    input_map = process_inputs(inputs)
 
     model
     |> Axon.predict(state, input_map)
@@ -135,26 +131,45 @@ defmodule Opsmo.CRPM do
   end
 
   def build_serving(trained_state \\ nil, batch_size \\ 3) do
+    defn_options = [compiler: Application.get_env(:opsmo, :compiler)]
+
     Nx.Serving.new(
       fn _options ->
         model = model()
         state = trained_state || load_state()
 
+        {_init_fn, predict_fn} = Axon.build(model)
+
         template = %{
-          "cpu" => Nx.template({1, 2}, :f32),
-          "memory" => Nx.template({1, 3}, :f32),
-          "disk" => Nx.template({1, 2}, :f32)
+          "cpu" => Nx.template({batch_size, 2}, :f32),
+          "disk" => Nx.template({batch_size, 2}, :f32),
+          "memory" => Nx.template({batch_size, 3}, :f32)
         }
 
-        {_init_fn, predict_fn} = Axon.compile(model, template, state)
+        template_args = [Nx.to_template(state), template]
+
+        predict_fn = Nx.Defn.compile(predict_fn, template_args, defn_options)
 
         fn inputs ->
+          inputs = Nx.Batch.pad(inputs, batch_size - inputs.size)
           predict_fn.(state, inputs)
         end
       end,
-      batch_size: batch_size,
-      client_postprocessing: &result/1
+      batch_size: batch_size
     )
+    |> Nx.Serving.client_postprocessing(&result/2)
+  end
+
+  def process_inputs(inputs) do
+    %{
+      "cpu" => Nx.tensor(inputs["cpu"]),
+      "memory" => Nx.tensor(inputs["memory"]),
+      "disk" => Nx.tensor(inputs["disk"])
+    }
+  end
+
+  defp result({{cpu, memory, disk}, _}, _) do
+    result({cpu, memory, disk})
   end
 
   defp result({cpu, memory, disk}) do
