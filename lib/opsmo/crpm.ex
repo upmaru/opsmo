@@ -49,7 +49,7 @@ defmodule Opsmo.CRPM do
 
     memory_prediction =
       input_memory
-      |> Axon.dense(8, activation: :relu)
+      |> Axon.dense(8, activation: :relu, name: "memory_dense_1")
       |> Axon.dense(2, activation: :sigmoid, name: "memory")
 
     disk_prediction =
@@ -142,7 +142,7 @@ defmodule Opsmo.CRPM do
 
         template = %{
           "cpu" => Nx.template({1, 2}, :f32),
-          "memory" => Nx.template({1, 2}, :f32),
+          "memory" => Nx.template({1, 3}, :f32),
           "disk" => Nx.template({1, 2}, :f32)
         }
 

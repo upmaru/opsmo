@@ -33,7 +33,8 @@ defmodule Opsmo.CRPM.Dataset.Memory do
 
   This data generation is only good for solving cold start. Once we collect more data we should use real outcomes to further tain this model.
   """
-  def generate(total_memory_list, requested_memory_list) do
+  def generate(total_memory_list, requested_memory_list, opts \\ []) do
+    seed = Keyword.get(opts, :seed, 121_345)
     total_memory =
       Nx.tensor(total_memory_list)
 
@@ -82,7 +83,7 @@ defmodule Opsmo.CRPM.Dataset.Memory do
     # reorder the columns to match [requested, used, total_normalized]
     x = Nx.take(x, Nx.tensor([0, 2, 1]), axis: 1)
 
-    key = Nx.Random.key(121_345)
+    key = Nx.Random.key(seed)
 
     {x, _} = Nx.Random.shuffle(key, x)
 
@@ -120,11 +121,11 @@ defmodule Opsmo.CRPM.Dataset.Memory do
     %{data: x, target: y}
   end
 
-  def train do
-    generate([2048, 4096, 8192, 16384, 32768, 65536], [128, 256, 512, 1024, 2048, 4096])
+  def train(seed \\ 121_345) do
+    generate([2048, 4096, 8192, 16384, 32768, 65536], [128, 256, 512, 1024, 2048, 4096], seed: seed)
   end
 
-  def test do
-    generate([1024, 6144, 12288, 24576, 49152], [64, 230, 461, 922, 1844])
+  def test(seed \\ 267_434) do
+    generate([1024, 6144, 12288, 24576, 49152], [64, 230, 461, 922, 1844], seed: seed)
   end
 end

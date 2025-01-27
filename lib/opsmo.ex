@@ -84,11 +84,14 @@ defmodule Opsmo do
         String.ends_with?(p, ".safetensors")
       end)
 
+
     tensors =
       Enum.map(layers, fn layer ->
         layer_name = String.replace(layer, ".safetensors", "")
 
-        {layer_name, Safetensors.read!(path <> "/" <> layer)}
+        tensor_path = path <> "/" <> layer
+
+        {layer_name, Safetensors.read!(tensor_path)}
       end)
       |> Enum.into(%{})
 

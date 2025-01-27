@@ -6,10 +6,10 @@ defmodule Opsmo.CRPM.Dataset do
   alias __MODULE__.Memory
   alias __MODULE__.Base
 
-  def train do
-    memory = Memory.train()
-    disk = Base.train()
-    cpu = Base.train()
+  def train(seed \\ 65_234) do
+    memory = Memory.train(seed * 2)
+    disk = Base.train(seed * 3)
+    cpu = Base.train(seed * 4)
 
     inputs = %{
       "cpu" => cpu.data,
@@ -22,10 +22,10 @@ defmodule Opsmo.CRPM.Dataset do
     end)
   end
 
-  def test(samples \\ 3) do
-    memory = Memory.train()
-    disk = Base.train()
-    cpu = Base.train()
+  def test(samples \\ 3, seed \\ 132_276) do
+    memory = Memory.test(seed * 2)
+    disk = Base.test(seed * 3)
+    cpu = Base.test(seed * 4)
 
     memory_sample = Nx.slice_along_axis(memory.data, 0, samples, axis: 0)
     memory_target = Nx.slice_along_axis(memory.target, 0, samples, axis: 0)
