@@ -131,7 +131,12 @@ defmodule Opsmo.CRPM do
   end
 
   def build_serving(trained_state \\ nil, batch_size \\ 3) do
-    defn_options = [compiler: Application.get_env(:opsmo, :compiler)]
+    defn_options =
+      if compiler = Application.get_env(:opsmo, :compiler) do
+        [compiler: compiler]
+      else
+        []
+      end
 
     Nx.Serving.new(
       fn _options ->
