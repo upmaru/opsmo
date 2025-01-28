@@ -19,3 +19,5 @@ jobs:
       - uses: cucumber/action-publish-hex@v1.0.0
         with:
           hex-api-key: ${{ secrets.HEX_API_KEY }}
+        env:
+          CI: "true"
