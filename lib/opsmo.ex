@@ -16,8 +16,6 @@ defmodule Opsmo do
   def spec(model, opts \\ []) when model in @valid_models do
     {autoload_state, opts} = Keyword.pop(opts, :autoload_state, false)
 
-    IO.inspect("autoload_state: #{autoload_state}")
-
     serving = model.build_serving(autoload_state: autoload_state)
 
     options =
@@ -91,35 +89,41 @@ defmodule Opsmo do
 
             In config.exs and run `mix opsmo.embed` to download the model.
           """
+        else
+          :ok
         end
 
       has_files ->
         :ok
     end
 
-    parameters =
-      File.read!(path <> "/parameters.json")
-      |> Jason.decode!()
+    if System.get_env("MIX_TASK") == "opsmo.embed" do
+      Axon.ModelState.empty()
+    else
+      parameters =
+        File.read!(path <> "/parameters.json")
+        |> Jason.decode!()
 
-    layers =
-      File.ls!(path)
-      |> Enum.filter(fn p ->
-        String.ends_with?(p, ".safetensors")
-      end)
+      layers =
+        File.ls!(path)
+        |> Enum.filter(fn p ->
+          String.ends_with?(p, ".safetensors")
+        end)
 
-    tensors =
-      Enum.map(layers, fn layer ->
-        layer_name = String.replace(layer, ".safetensors", "")
+      tensors =
+        Enum.map(layers, fn layer ->
+          layer_name = String.replace(layer, ".safetensors", "")
 
-        tensor_path = path <> "/" <> layer
+          tensor_path = path <> "/" <> layer
 
-        {layer_name, Safetensors.read!(tensor_path)}
-      end)
-      |> Enum.into(%{})
+          {layer_name, Safetensors.read!(tensor_path)}
+        end)
+        |> Enum.into(%{})
 
-    state = Axon.ModelState.empty()
+      state = Axon.ModelState.empty()
 
-    %{state | data: tensors, parameters: parameters}
+      %{state | data: tensors, parameters: parameters}
+    end
   end
 
   defp models_path(:training) do
