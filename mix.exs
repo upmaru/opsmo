@@ -4,7 +4,7 @@ defmodule Opsmo.MixProject do
   def project do
     [
       app: :opsmo,
-      version: "0.3.1",
+      version: "0.3.2",
       elixir: "~> 1.15",
       description: description(),
       license: "Apache-2.0",
@@ -44,7 +44,10 @@ defmodule Opsmo.MixProject do
       {:nx, "~> 0.9"},
       {:axon, "~> 0.7"},
       {:safetensors, "~> 0.1"},
-      {:req, "~> 0.5.0"}
+      {:req, "~> 0.5.0"},
+
+      # Docs
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]
