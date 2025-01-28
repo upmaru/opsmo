@@ -14,7 +14,9 @@ defmodule Opsmo do
   end
 
   def spec(model, opts \\ []) when model in @valid_models do
-    serving = model.build_serving()
+    autoload_state = Keyword.get(opts, :autoload_state, false)
+
+    serving = model.build_serving(autoload_state: autoload_state)
 
     options =
       [name: model, serving: serving]
@@ -49,7 +51,8 @@ defmodule Opsmo do
     end)
   end
 
-  def load(name) do
+  def load(name, opts \\ []) do
+    autoload_state = Keyword.get(opts, :autoload_state, false)
     mode = Application.get_env(:opsmo, :mode, :inference)
     models_config = Application.get_env(:opsmo, :models, %{})
 
@@ -71,9 +74,22 @@ defmodule Opsmo do
 
     # Download if files are missing
     cond do
-      !has_files && mode == :inference ->
+      !has_files && autoload_state && mode == :inference ->
         IO.puts("Model files not found. Downloading #{name}...")
         HF.download!(name, branch: branch)
+
+      !has_files && mode == :inference ->
+        if System.get_env("MIX_TASK") != "opsmo.embed" do
+          raise """
+            Model files not found. Please add
+
+              config :opsmo, :models, %{
+                #{name} => \"#{branch}\"
+              }
+
+            In config.exs and run `mix opsmo.embed` to download the model.
+          """
+        end
 
       has_files ->
         :ok

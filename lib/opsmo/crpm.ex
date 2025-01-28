@@ -132,7 +132,11 @@ defmodule Opsmo.CRPM do
     |> result()
   end
 
-  def build_serving(trained_state \\ nil, batch_size \\ 3) do
+  def build_serving(opts \\ []) do
+    trained_state = Keyword.get(opts, :trained_state, nil)
+    batch_size = Keyword.get(opts, :batch_size, 3)
+    autoload_state = Keyword.get(opts, :autoload_state, false)
+
     defn_options =
       if compiler = Application.get_env(:opsmo, :compiler) do
         [compiler: compiler]
@@ -143,7 +147,7 @@ defmodule Opsmo.CRPM do
     Nx.Serving.new(
       fn _options ->
         model = model()
-        state = trained_state || load_state()
+        state = trained_state || load_state(@model_name, autoload_state: autoload_state)
 
         {_init_fn, predict_fn} = Axon.build(model)
 
@@ -194,7 +198,7 @@ defmodule Opsmo.CRPM do
     to: Opsmo,
     as: :dump
 
-  defdelegate load_state(name \\ @model_name),
+  defdelegate load_state(name \\ @model_name, opts \\ []),
     to: Opsmo,
     as: :load
 end
