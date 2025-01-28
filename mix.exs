@@ -4,10 +4,13 @@ defmodule Opsmo.MixProject do
   def project do
     [
       app: :opsmo,
-      version: "0.3.0",
+      version: "0.3.1",
       elixir: "~> 1.15",
+      description: description(),
+      license: "Apache-2.0",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      package: package()
     ]
   end
 
@@ -19,11 +22,27 @@ defmodule Opsmo.MixProject do
     ]
   end
 
+  defp description do
+    """
+    Opsmo is a collection of ML models for DevOps
+    """
+  end
+
+  defp package do
+    [
+      name: "opsmo",
+      files: ["lib", "mix.exs", "README*", "LICENSE"],
+      licenses: ["Apache-2.0"],
+      maintainers: ["Zack Siri"],
+      links: %{"GitHub" => "https://github.com/upmaru/opsmo"}
+    ]
+  end
+
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:nx, "~> 0.9"},
-      {:axon, github: "elixir-nx/axon"},
+      {:axon, "~> 0.7"},
       {:safetensors, "~> 0.1"},
       {:req, "~> 0.5.0"}
       # {:dep_from_hexpm, "~> 0.3.0"},
