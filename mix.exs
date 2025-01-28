@@ -4,7 +4,7 @@ defmodule Opsmo.MixProject do
   def project do
     [
       app: :opsmo,
-      version: "0.3.5",
+      version: "0.3.6",
       elixir: "~> 1.15",
       description: description(),
       license: "Apache-2.0",
