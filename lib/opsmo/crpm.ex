@@ -144,31 +144,38 @@ defmodule Opsmo.CRPM do
         []
       end
 
-    Nx.Serving.new(
-      fn _options ->
-        model = model()
-        state = trained_state || load_state(@model_name, autoload_state: autoload_state)
+    # If we are in a mix task, we don't need to load the model
+    if System.get_env("MIX_TASK") == "opsmo.embed" do
+      Nx.Serving.new(fn _options ->
+        :ok
+      end)
+    else
+      Nx.Serving.new(
+        fn _options ->
+          model = model()
+          state = trained_state || load_state(@model_name, autoload_state: autoload_state)
 
-        {_init_fn, predict_fn} = Axon.build(model)
+          {_init_fn, predict_fn} = Axon.build(model)
 
-        template = %{
-          "cpu" => Nx.template({batch_size, 2}, :f32),
-          "disk" => Nx.template({batch_size, 2}, :f32),
-          "memory" => Nx.template({batch_size, 3}, :f32)
-        }
+          template = %{
+            "cpu" => Nx.template({batch_size, 2}, :f32),
+            "disk" => Nx.template({batch_size, 2}, :f32),
+            "memory" => Nx.template({batch_size, 3}, :f32)
+          }
 
-        template_args = [Nx.to_template(state), template]
+          template_args = [Nx.to_template(state), template]
 
-        predict_fn = Nx.Defn.compile(predict_fn, template_args, defn_options)
+          predict_fn = Nx.Defn.compile(predict_fn, template_args, defn_options)
 
-        fn inputs ->
-          inputs = Nx.Batch.pad(inputs, batch_size - inputs.size)
-          predict_fn.(state, inputs)
-        end
-      end,
-      batch_size: batch_size
-    )
-    |> Nx.Serving.client_postprocessing(&result/2)
+          fn inputs ->
+            inputs = Nx.Batch.pad(inputs, batch_size - inputs.size)
+            predict_fn.(state, inputs)
+          end
+        end,
+        batch_size: batch_size
+      )
+      |> Nx.Serving.client_postprocessing(&result/2)
+    end
   end
 
   def process_inputs(inputs) do
