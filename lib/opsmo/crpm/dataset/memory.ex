@@ -4,13 +4,13 @@ defmodule Opsmo.CRPM.Dataset.Memory do
   # 128GB in MB
   @max_memory 131_072
 
-  defp normalize_memory(memory) when is_number(memory) do
+  def normalize_memory(memory) when is_number(memory) do
     memory
     |> Nx.tensor()
     |> normalize_memory()
   end
 
-  defp normalize_memory(%Nx.Tensor{} = memory) do
+  def normalize_memory(%Nx.Tensor{} = memory) do
     memory
     |> Nx.subtract(@min_memory)
     |> Nx.divide(@max_memory - @min_memory)
