@@ -4,7 +4,7 @@ defmodule Opsmo.MixProject do
   def project do
     [
       app: :opsmo,
-      version: "0.3.2",
+      version: "0.3.7",
       elixir: "~> 1.15",
       description: description(),
       license: "Apache-2.0",
@@ -24,7 +24,7 @@ defmodule Opsmo.MixProject do
 
   defp description do
     """
-    Opsmo is a collection of ML models for DevOps
+    Opsmo is a collection of ML models for DevOps / SRE / Observability
     """
   end
 
