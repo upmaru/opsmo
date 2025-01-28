@@ -4,7 +4,7 @@ defmodule Opsmo.MixProject do
   def project do
     [
       app: :opsmo,
-      version: "0.3.6",
+      version: "0.3.2",
       elixir: "~> 1.15",
       description: description(),
       license: "Apache-2.0",
@@ -40,20 +40,51 @@ defmodule Opsmo.MixProject do
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
+    ci? = System.get_env("CI") == "true"
+
+    ci = if ci?, do: :ci
+
     [
       {:nx, "~> 0.9"},
       {:axon, "~> 0.7"},
       {:safetensors, "~> 0.1"},
       {:req, "~> 0.5.0"},
 
-      # Accelerators
-      {:emlx, github: "elixir-nx/emlx", only: :dev, optional: true},
-      {:exla, "~> 0.9", only: :dev, optional: true},
-
       # Docs
-      {:ex_doc, ">= 0.0.0", only: [:dev, :prod], runtime: false}
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]
+    |> Enum.concat(accelerators(:os.type(), ci))
+  end
+
+  defp accelerators(_, :ci), do: []
+
+  defp accelerators({:unix, :darwin}, _) do
+    [
+      {:emlx, github: "elixir-nx/emlx", only: [:dev, :test]}
+    ]
+  end
+
+  defp accelerators({:unix, :linux}, _) do
+    case gnu_or_musl() do
+      :musl ->
+        []
+
+      :gnu ->
+        [{:exla, "~> 0.9", only: [:dev, :test]}]
+    end
+  end
+
+  defp gnu_or_musl do
+    {output, _} = System.cmd("ldd", ["--version"], stderr_to_stdout: true)
+
+    cond do
+      String.contains?(output, "musl") ->
+        :musl
+
+      String.contains?(output, "GLIBC") ->
+        :gnu
+    end
   end
 end

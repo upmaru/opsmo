@@ -20,4 +20,4 @@ jobs:
         with:
           hex-api-key: ${{ secrets.HEX_API_KEY }}
         env:
-          MIX_ENV: prod
+          CI: "true"
