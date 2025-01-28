@@ -6,8 +6,11 @@ defmodule Opsmo.MixProject do
       app: :opsmo,
       version: "0.3.0",
       elixir: "~> 1.15",
+      description: description(),
+      license: "Apache-2.0",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      package: package()
     ]
   end
 
@@ -16,6 +19,22 @@ defmodule Opsmo.MixProject do
     [
       extra_applications: [:logger],
       mod: {Opsmo.Application, []}
+    ]
+  end
+
+  defp description do
+    """
+    Opsmo is a collection of ML models for DevOps
+    """
+  end
+
+  defp package do
+    [
+      name: "opsmo",
+      files: ["lib", "mix.exs", "README*", "LICENSE"],
+      licenses: ["Apache-2.0"],
+      maintainers: ["Zack Siri"],
+      links: %{"GitHub" => "https://github.com/upmaru/opsmo"}
     ]
   end
 
