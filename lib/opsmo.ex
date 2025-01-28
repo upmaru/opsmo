@@ -22,7 +22,11 @@ defmodule Opsmo do
       [name: model, serving: serving]
       |> Keyword.merge(opts)
 
-    {Nx.Serving, options}
+    if System.get_env("MIX_TASK") == "opsmo.embed" do
+      nil
+    else
+      {Nx.Serving, options}
+    end
   end
 
   def predict(model, inputs) do
@@ -79,51 +83,43 @@ defmodule Opsmo do
         HF.download!(name, branch: branch)
 
       !has_files && mode == :inference ->
-        if System.get_env("MIX_TASK") != "opsmo.embed" do
-          raise """
-            Model files not found. Please add
+        raise """
+          Model files not found. Please add
 
-              config :opsmo, :models, %{
-                #{name} => \"#{branch}\"
-              }
+            config :opsmo, :models, %{
+              #{name} => \"#{branch}\"
+            }
 
-            In config.exs and run `mix opsmo.embed` to download the model.
-          """
-        else
-          :ok
-        end
+          In config.exs and run `mix opsmo.embed` to download the model.
+        """
 
       has_files ->
         :ok
     end
 
-    if System.get_env("MIX_TASK") == "opsmo.embed" do
-      Axon.ModelState.empty()
-    else
-      parameters =
-        File.read!(path <> "/parameters.json")
-        |> Jason.decode!()
+    parameters =
+      File.read!(path <> "/parameters.json")
+      |> Jason.decode!()
 
-      layers =
-        File.ls!(path)
-        |> Enum.filter(fn p ->
-          String.ends_with?(p, ".safetensors")
-        end)
+    layers =
+      File.ls!(path)
+      |> Enum.filter(fn p ->
+        String.ends_with?(p, ".safetensors")
+      end)
 
-      tensors =
-        Enum.map(layers, fn layer ->
-          layer_name = String.replace(layer, ".safetensors", "")
+    tensors =
+      Enum.map(layers, fn layer ->
+        layer_name = String.replace(layer, ".safetensors", "")
 
-          tensor_path = path <> "/" <> layer
+        tensor_path = path <> "/" <> layer
 
-          {layer_name, Safetensors.read!(tensor_path)}
-        end)
-        |> Enum.into(%{})
+        {layer_name, Safetensors.read!(tensor_path)}
+      end)
+      |> Enum.into(%{})
 
-      state = Axon.ModelState.empty()
+    state = Axon.ModelState.empty()
 
-      %{state | data: tensors, parameters: parameters}
-    end
+    %{state | data: tensors, parameters: parameters}
   end
 
   defp models_path(:training) do
