@@ -16,6 +16,8 @@ defmodule Opsmo do
   def spec(model, opts \\ []) when model in @valid_models do
     {autoload_state, opts} = Keyword.pop(opts, :autoload_state, false)
 
+    IO.inspect("autoload_state: #{autoload_state}")
+
     serving = model.build_serving(autoload_state: autoload_state)
 
     options =
