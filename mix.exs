@@ -4,8 +4,8 @@ defmodule Opsmo.MixProject do
   def project do
     [
       app: :opsmo,
-      version: "0.1.0",
-      elixir: "~> 1.18",
+      version: "0.2.0",
+      elixir: "~> 1.15",
       start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
@@ -23,7 +23,7 @@ defmodule Opsmo.MixProject do
   defp deps do
     [
       {:nx, "~> 0.9"},
-      {:axon, "~> 0.7"},
+      {:axon, github: "elixir-nx/axon"},
       {:safetensors, "~> 0.1"},
       {:req, "~> 0.5.0"}
       # {:dep_from_hexpm, "~> 0.3.0"},
@@ -44,14 +44,12 @@ defmodule Opsmo.MixProject do
         []
 
       :gnu ->
-        [
-          {:exla, "~> 0.9"}
-        ]
+        [{:exla, "~> 0.9"}]
     end
   end
 
   defp gnu_or_musl do
-    {output, _} = System.get_env("ldd", ["--version"], stderr_to_stdout: true)
+    {output, _} = System.cmd("ldd", ["--version"], stderr_to_stdout: true)
 
     cond do
       String.contains?(output, "musl") ->
