@@ -47,11 +47,11 @@ defmodule Opsmo.MixProject do
       {:req, "~> 0.5.0"},
 
       # Accelerators
-      {:emlx, github: "elixir-nx/emlx", optional: true},
-      {:exla, "~> 0.9", optional: true},
+      {:emlx, github: "elixir-nx/emlx", only: :dev, optional: true},
+      {:exla, "~> 0.9", only: :dev, optional: true},
 
       # Docs
-      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
+      {:ex_doc, ">= 0.0.0", only: [:dev, :prod], runtime: false}
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]
