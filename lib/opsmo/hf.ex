@@ -35,15 +35,17 @@ defmodule Opsmo.HF do
     # Get file list from HF API
     files = list_model_files(full_name, branch)
 
+    IO.puts("\nDownloading #{model_name} (#{branch})")
+
     # Download all files
     Opsmo.TaskSupervisor
-    |> Task.Supervisor.async_stream_nolink(files, __MODULE__, :download_file, [
-      full_name,
-      model_path,
-      branch
-    ])
+    |> Task.Supervisor.async_stream_nolink(files, fn file ->
+      IO.puts("Downloading #{file}...")
+      download_file(file, full_name, model_path, branch)
+    end)
     |> Enum.map(fn
       {:ok, %{body: body}} ->
+        IO.puts("✓ Downloaded #{Path.basename(body.path)}")
         body.path
 
       {:error, reason} ->

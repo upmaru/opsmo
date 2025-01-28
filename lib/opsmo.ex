@@ -51,7 +51,9 @@ defmodule Opsmo do
 
   def load(name) do
     mode = Application.get_env(:opsmo, :mode, :inference)
-    branch = Application.get_env(:opsmo, :branch, "main")
+    models_config = Application.get_env(:opsmo, :models, %{})
+
+    branch = Map.get(models_config, name, "main")
 
     path = models_path(mode) <> String.downcase(name)
 
