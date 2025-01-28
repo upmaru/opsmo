@@ -12,6 +12,13 @@ defmodule Mix.Tasks.Opsmo.Embed do
 
       $ mix opsmo.embed MODEL_NAME[:VERSION] [MODEL_NAME[:VERSION]...]
 
+  If no models are specified, it will use the configuration from config.exs:
+
+      config :opsmo, :models, %{
+        "crpm" => "0.3.7",
+        "llm" => "main"
+      }
+
   Examples:
       $ mix opsmo.embed crpm
       $ mix opsmo.embed crpm:v1.0.0
@@ -20,12 +27,44 @@ defmodule Mix.Tasks.Opsmo.Embed do
 
   @impl Mix.Task
   def run([]) do
-    Mix.raise("""
-    No model names provided.
+    Application.get_env(:opsmo, :models, %{})
+    |> validate_models_config()
+    |> case do
+      {:ok, models} when models == %{} ->
+        Mix.raise("""
+        No model names provided and no models configured.
 
-    Usage:
-        mix opsmo.embed MODEL_NAME[:VERSION] [MODEL_NAME[:VERSION]...]
-    """)
+        Either provide models as arguments:
+            mix opsmo.embed MODEL_NAME[:VERSION] [MODEL_NAME[:VERSION]...]
+
+        Or configure them in config.exs:
+            config :opsmo, :models, %{
+              "crpm" => "0.3.7",
+              "llm" => "main"
+            }
+        """)
+
+      {:ok, models} ->
+        Mix.Task.run("app.start")
+
+        models
+        |> Enum.each(fn {model_name, branch} ->
+          IO.puts("\nDownloading #{model_name} (#{branch})")
+          HF.download!(model_name, branch: branch)
+        end)
+
+      {:error, reason} ->
+        Mix.raise("""
+        Invalid models configuration:
+        #{reason}
+
+        Expected format in config.exs:
+            config :opsmo, :models, %{
+              "crpm" => "0.3.7",
+              "llm" => "main"
+            }
+        """)
+    end
   end
 
   def run(model_specs) do
@@ -34,11 +73,8 @@ defmodule Mix.Tasks.Opsmo.Embed do
     model_specs
     |> Enum.each(fn spec ->
       {model_name, branch} = parse_model_spec(spec)
-      IO.puts("\nDownloading model: #{model_name} (#{branch})")
-
+      IO.puts("\nDownloading #{model_name} (#{branch})")
       HF.download!(model_name, branch: branch)
-
-      IO.puts("✓ #{model_name} downloaded successfully")
     end)
   end
 
@@ -46,6 +82,24 @@ defmodule Mix.Tasks.Opsmo.Embed do
     case String.split(spec, ":", parts: 2) do
       [model_name, branch] -> {model_name, branch}
       [model_name] -> {model_name, "main"}
+    end
+  end
+
+  defp validate_models_config(config) when not is_map(config) do
+    {:error, "Configuration must be a map, got: #{inspect(config)}"}
+  end
+
+  defp validate_models_config(config) do
+    invalid_entries =
+      config
+      |> Enum.reject(fn
+        {model, branch} when is_binary(model) and is_binary(branch) -> true
+        _ -> false
+      end)
+
+    case invalid_entries do
+      [] -> {:ok, config}
+      entries -> {:error, "Invalid entries: #{inspect(entries)}"}
     end
   end
 end
