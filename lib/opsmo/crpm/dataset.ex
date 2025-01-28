@@ -7,9 +7,9 @@ defmodule Opsmo.CRPM.Dataset do
   alias __MODULE__.Base
 
   def train(seed \\ 65_234) do
-    memory = Memory.train(seed * 2)
-    disk = Base.train(seed * 3)
-    cpu = Base.train(seed * 4)
+    memory = Memory.train(seed: seed * 2)
+    disk = Base.train(seed: seed * 3)
+    cpu = Base.train(seed: seed * 4)
 
     inputs = %{
       "cpu" => cpu.data,
