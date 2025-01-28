@@ -51,6 +51,7 @@ defmodule Opsmo do
 
   def load(name) do
     mode = Application.get_env(:opsmo, :mode, :inference)
+    branch = Application.get_env(:opsmo, :branch, "main")
 
     path = models_path(mode) <> String.downcase(name)
 
@@ -70,7 +71,7 @@ defmodule Opsmo do
     cond do
       !has_files && mode == :inference ->
         IO.puts("Model files not found. Downloading #{name}...")
-        HF.download!(name)
+        HF.download!(name, branch: branch)
 
       has_files ->
         :ok
