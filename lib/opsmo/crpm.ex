@@ -34,6 +34,8 @@ defmodule Opsmo.CRPM do
 
   @model_name "crpm"
 
+  defdelegate normalize_memory(memory), to: Opsmo.CRPM.Dataset.Memory
+
   @doc """
   Instantiate a new model.
   """
