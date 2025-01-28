@@ -23,7 +23,7 @@ defmodule Opsmo.MixProject do
   defp deps do
     [
       {:nx, "~> 0.9"},
-      {:axon, github: "elixir-nx/axon"},
+      {:axon, "~> 0.7"},
       {:safetensors, "~> 0.1"},
       {:req, "~> 0.5.0"}
       # {:dep_from_hexpm, "~> 0.3.0"},
