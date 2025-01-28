@@ -45,6 +45,8 @@ defmodule Mix.Tasks.Opsmo.Embed do
         """)
 
       {:ok, models} ->
+        System.put_env("MIX_TASK", "opsmo.embed")
+
         Mix.Task.run("app.start")
 
         models
@@ -68,6 +70,8 @@ defmodule Mix.Tasks.Opsmo.Embed do
   end
 
   def run(model_specs) do
+    System.put_env("MIX_TASK", "opsmo.embed")
+
     Mix.Task.run("app.start")
 
     model_specs
