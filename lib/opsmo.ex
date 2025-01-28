@@ -22,10 +22,14 @@ defmodule Opsmo do
       [name: model, serving: serving]
       |> Keyword.merge(opts)
 
+    {Nx.Serving, options}
+  end
+
+  def append_model_spec(children, model, opts \\ []) do
     if System.get_env("MIX_TASK") == "opsmo.embed" do
-      nil
+      children
     else
-      {Nx.Serving, options}
+      children ++ [spec(model, opts)]
     end
   end
 
