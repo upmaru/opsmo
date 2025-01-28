@@ -4,7 +4,7 @@ defmodule Opsmo.MixProject do
   def project do
     [
       app: :opsmo,
-      version: "0.2.0",
+      version: "0.3.0",
       elixir: "~> 1.15",
       start_permanent: Mix.env() == :prod,
       deps: deps()
