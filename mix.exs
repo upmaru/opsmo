@@ -4,7 +4,7 @@ defmodule Opsmo.MixProject do
   def project do
     [
       app: :opsmo,
-      version: "0.3.12",
+      version: "0.3.13",
       elixir: "~> 1.15",
       description: description(),
       license: "Apache-2.0",
@@ -31,7 +31,7 @@ defmodule Opsmo.MixProject do
   defp package do
     [
       name: "opsmo",
-      files: ["lib", "mix.exs", "README*", "LICENSE"],
+      files: ["lib", "priv", "mix.exs", "README*", "LICENSE"],
       licenses: ["Apache-2.0"],
       maintainers: ["Zack Siri"],
       links: %{"GitHub" => "https://github.com/upmaru/opsmo"}
