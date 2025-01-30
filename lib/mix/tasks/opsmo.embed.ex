@@ -47,11 +47,10 @@ defmodule Mix.Tasks.Opsmo.Embed do
       {:ok, models} ->
         System.put_env("MIX_TASK", "opsmo.embed")
 
-        {:ok, _} = Application.ensure_all_started(:opsmo)
+        Mix.Task.run("app.start")
 
         models
         |> Enum.each(fn {model_name, branch} ->
-          IO.puts("\nDownloading #{model_name} (#{branch})")
           HF.download!(model_name, branch: branch)
         end)
 
@@ -72,7 +71,7 @@ defmodule Mix.Tasks.Opsmo.Embed do
   def run(model_specs) do
     System.put_env("MIX_TASK", "opsmo.embed")
 
-    {:ok, _} = Application.ensure_all_started(:opsmo)
+    Mix.Task.run("app.start")
 
     model_specs
     |> Enum.each(fn spec ->

@@ -31,7 +31,7 @@ defmodule Opsmo.MixProject do
   defp package do
     [
       name: "opsmo",
-      files: ["lib", "mix.exs", "README*", "LICENSE"],
+      files: ["lib", "priv", "mix.exs", "README*", "LICENSE"],
       licenses: ["Apache-2.0"],
       maintainers: ["Zack Siri"],
       links: %{"GitHub" => "https://github.com/upmaru/opsmo"}
