@@ -47,7 +47,7 @@ defmodule Mix.Tasks.Opsmo.Embed do
       {:ok, models} ->
         System.put_env("MIX_TASK", "opsmo.embed")
 
-        Mix.Task.run("app.start")
+        {:ok, _} = Application.ensure_all_started(:opsmo)
 
         models
         |> Enum.each(fn {model_name, branch} ->
@@ -72,7 +72,7 @@ defmodule Mix.Tasks.Opsmo.Embed do
   def run(model_specs) do
     System.put_env("MIX_TASK", "opsmo.embed")
 
-    Mix.Task.run("app.start")
+    {:ok, _} = Application.ensure_all_started(:opsmo)
 
     model_specs
     |> Enum.each(fn spec ->
